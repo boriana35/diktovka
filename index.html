@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Моята диктовка — Приложение за начални учители</title>
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Google Fonts for Primary School (Comic-like / Clean Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Open Sans"', 'sans-serif'],
+            kids: ['Comfortaa', 'cursive']
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Styling for primary school ruled lines in print view */
+    .writing-line {
+      border-bottom: 1px solid #94a3b8;
+      height: 2rem;
+      position: relative;
+    }
+    .writing-line::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      border-top: 1px dashed #cbd5e1;
+    }
+
+    /* PRINT ONLY STYLES */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 14pt !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+      }
+      .dictation-print-text {
+        font-size: 18pt !important;
+        line-height: 2 !important;
+        letter-spacing: 0.5px !important;
+        word-spacing: 2px !important;
+      }
+    }
+
+    /* Smooth custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col">
+
+  <!-- HEADER / APP NAVIGATION (Hidden in Print) -->
+  <header class="no-print bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white/20 p-2.5 rounded-xl backdrop-blur-sm">
+          <i class="fa-solid fa-pen-nib text-2xl text-yellow-300"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold font-kids tracking-wide">Моята диктовка</h1>
+          <p class="text-xs text-sky-100">Генератор за начални учители (1. - 2. клас)</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center space-x-1 bg-white/10 p-1 rounded-xl backdrop-blur-md">
+        <button id="tab-gen-btn" onclick="switchTab('generator')" class="px-4 py-2 rounded-lg font-medium text-sm transition-all bg-white text-sky-700 shadow">
+          <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Генератор
+        </button>
+        <button id="tab-dict-btn" onclick="switchTab('dictionary')" class="px-4 py-2 rounded-lg font-medium text-sm transition-all hover:bg-white/10 text-white">
+          <i class="fa-solid fa-book-bookmark mr-2"></i>Моите думи
+        </button>
+        <button id="tab-bank-btn" onclick="switchTab('bank')" class="px-4 py-2 rounded-lg font-medium text-sm transition-all hover:bg-white/10 text-white">
+          <i class="fa-solid fa-database mr-2"></i>Банка изречения
+        </button>
+        <button id="tab-saved-btn" onclick="switchTab('saved')" class="px-4 py-2 rounded-lg font-medium text-sm transition-all hover:bg-white/10 text-white">
+          <i class="fa-solid fa-folder-open mr-2"></i>Запазени
+        </button>
+        <button id="tab-settings-btn" onclick="switchTab('settings')" class="px-4 py-2 rounded-lg font-medium text-sm transition-all hover:bg-white/10 text-white">
+          <i class="fa-solid fa-gear mr-2"></i>Настройки / ИИ
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+
+    <!-- TAB 1: GENERATOR -->
+    <div id="tab-generator" class="space-y-6">
+
+      <!-- Section 1: Alphabet Selector -->
+      <section class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-7 h-7 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center text-sm font-bold">1</span>
+              Изучени букви (<span id="selected-letters-count">30</span>/30)
+            </h2>
+            <p class="text-xs text-slate-500">Изберете само буквите, които учениците вече са изучили.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="selectAllLetters()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+              <i class="fa-solid fa-check-double mr-1"></i>Избери всички
+            </button>
+            <button onclick="clearAllLetters()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-red-600 rounded-lg transition">
+              <i class="fa-solid fa-xmark mr-1"></i>Изчисти
+            </button>
+            <div class="h-4 w-px bg-slate-200 mx-1"></div>
+            <!-- Quick Presets -->
+            <button onclick="applyPreset('vowels')" class="px-2.5 py-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-md">Само гласни</button>
+            <button onclick="applyPreset('grade1_start')" class="px-2.5 py-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-md">А, М, И, О, Е, Н</button>
+            <button onclick="applyPreset('no_complex')" class="px-2.5 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded-md">Без Щ, Ю, Я, Ь</button>
+          </div>
+        </div>
+
+        <!-- Letters Grid -->
+        <div id="alphabet-grid" class="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-15 gap-1.5">
+          <!-- Dynamically populated letters buttons -->
+        </div>
+      </section>
+
+      <!-- Section 2: Settings & Dictionary Modes Grid -->
+      <div class="no-print grid grid-cols-1 md:grid-cols-12 gap-6">
+
+        <!-- Dictation Settings (Left - 7 cols) -->
+        <div class="md:col-span-7 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2 pb-3 border-b border-slate-100">
+            <span class="w-7 h-7 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center text-sm font-bold">2</span>
+            Параметри на диктовката
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Format -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Формат на текста</label>
+              <select id="setting-format" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500">
+                <option value="connected">Свързан текст (с обща тема и сюжет)</option>
+                <option value="sentences">Отделни самостоятелни изречения</option>
+              </select>
+            </div>
+
+            <!-- Sentence Count -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Брой изречения</label>
+              <div class="flex items-center space-x-2">
+                <input type="range" id="setting-sentences-range" min="1" max="10" value="4" oninput="document.getElementById('sentences-val').innerText = this.value" class="w-full accent-sky-600">
+                <span id="sentences-val" class="font-bold text-sky-600 text-base w-6 text-center">4</span>
+              </div>
+            </div>
+
+            <!-- Sentence Types -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Вид изречения</label>
+              <select id="setting-types" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500">
+                <option value="declarative">Само съобщителни (.)</option>
+                <option value="mixed">Съобщителни и въпросителни (. / ?)</option>
+                <option value="exclamatory">Всички видове (. / ? / !)</option>
+              </select>
+            </div>
+
+            <!-- Difficulty Level -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Трудност</label>
+              <select id="setting-difficulty" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500">
+                <option value="easy">Лесно (кратки изречения 2-4 думи)</option>
+                <option value="medium" selected>Средно (стандартни изречения 4-7 думи)</option>
+                <option value="hard">Трудно (по-дълги изречения 7-10 думи)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Topic -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Тема (по желание)</label>
+            <input type="text" id="setting-topic" placeholder="напр. Семейство, Есен, На училище, Игри в двора..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500">
+            <p class="text-[11px] text-slate-400 mt-1">* Забележка: Изучените букви винаги имат приоритет пред избраната тема.</p>
+          </div>
+        </div>
+
+        <!-- Dictionary & Strict Controls (Right - 5 cols) -->
+        <div class="md:col-span-5 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 flex flex-col justify-between">
+          <div class="space-y-4">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2 pb-3 border-b border-slate-100">
+              <span class="w-7 h-7 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center text-sm font-bold">3</span>
+              Режим на речника
+            </h2>
+
+            <!-- Dictionary Restriction Mode -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Източник на думите</label>
+              <div class="space-y-2">
+                <label class="flex items-start space-x-2.5 p-2.5 border rounded-xl cursor-pointer transition hover:bg-slate-50 border-slate-200" id="mode-label-open">
+                  <input type="radio" name="dict-mode" value="open" checked class="mt-0.5 accent-sky-600">
+                  <div class="text-xs">
+                    <span class="font-bold text-slate-700 block">Моят речник + Допълнителни думи от ИИ</span>
+                    <span class="text-slate-500">ИИ може да използва и други български думи, съставени САМО от изучените букви.</span>
+                  </div>
+                </label>
+                <label class="flex items-start space-x-2.5 p-2.5 border rounded-xl cursor-pointer transition hover:bg-slate-50 border-slate-200" id="mode-label-strict">
+                  <input type="radio" name="dict-mode" value="strict" class="mt-0.5 accent-sky-600">
+                  <div class="text-xs">
+                    <span class="font-bold text-slate-700 block">Само думи от моя речник</span>
+                    <span class="text-slate-500">Стриктен режим: Използват се единствено думи, добавени от вас в "Моите думи".</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Mandatory Words -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Задължителни думи (със запетая)</label>
+              <input type="text" id="setting-required-words" placeholder="напр. мама, има, Нина" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500" onblur="validateRequiredWords()">
+              <div id="required-words-error" class="hidden text-xs text-red-600 mt-1 font-medium"></div>
+            </div>
+          </div>
+
+          <!-- Generation Engine Selection & Main Action -->
+          <div class="pt-3 border-t border-slate-100 space-y-3">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-600">Метод на генериране:</span>
+              <div class="flex items-center space-x-3">
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" name="engine-mode" value="ai" checked class="accent-sky-600">
+                  <span class="ml-1 text-slate-700 font-medium">ИИ (Gemini)</span>
+                </label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" name="engine-mode" value="bank" class="accent-sky-600">
+                  <span class="ml-1 text-slate-700 font-medium">Вградена банка</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- GENERATE BUTTON -->
+            <button id="btn-generate" onclick="generateDictation()" class="w-full py-3.5 px-6 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/30 transition-all flex items-center justify-center space-x-2 text-base">
+              <i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i>
+              <span>Генерирай диктовка</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Result & Interactive Editor -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- Editor Header -->
+        <div class="no-print bg-slate-50 p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-3">
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <i class="fa-solid fa-file-signature text-sky-600"></i>
+              Резултат от диктовката
+            </h3>
+            <span id="badge-source" class="hidden px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+              Генерирано с ИИ
+            </span>
+          </div>
+
+          <!-- Quick Editor Toolbar -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="checkCurrentText()" class="px-3 py-1.5 text-xs font-semibold bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-lg transition">
+              <i class="fa-solid fa-spell-check mr-1"></i>Провери текста
+            </button>
+            <button onclick="copyToClipboard()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+              <i class="fa-solid fa-copy mr-1"></i>Копирай
+            </button>
+            <button onclick="saveDictationModal()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+              <i class="fa-solid fa-bookmark mr-1"></i>Запази
+            </button>
+            <button onclick="exportAsTxt()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+              <i class="fa-solid fa-file-arrow-down mr-1"></i>Изтегли TXT
+            </button>
+            <button onclick="prepareAndPrint()" class="px-3.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition shadow-sm">
+              <i class="fa-solid fa-print mr-1"></i>Печат / PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- System Alerts / Error Messages -->
+        <div id="status-alert" class="no-print hidden p-4 border-b border-slate-200"></div>
+
+        <!-- Interactive Editable Area -->
+        <div class="p-6">
+          <div class="no-print mb-2 flex items-center justify-between text-xs text-slate-400">
+            <span>Можете свободно да редактирате и допълвате текста тук:</span>
+            <span id="editor-char-count">0 символа</span>
+          </div>
+
+          <!-- PRINT WORKSHEET HEADER (Visible ONLY on print) -->
+          <div class="print-only hidden mb-8 border-b-2 border-slate-900 pb-4">
+            <div class="flex justify-between items-end mb-4">
+              <div>
+                <h1 class="text-2xl font-bold font-kids text-slate-900">ДИКТОВКА</h1>
+                <p class="text-xs text-slate-600">Начално училище</p>
+              </div>
+              <div class="text-right text-xs space-y-1">
+                <p><strong>Име:</strong> ___________________________________</p>
+                <p><strong>Клас:</strong> _________ <strong>Дата:</strong> ______________</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Textarea (Screen View) -->
+          <textarea id="dictation-textarea" oninput="onTextareaEdit()" placeholder="Генерираният текст от диктовката ще се появи тук..." class="no-print w-full min-h-[160px] p-4 font-sans text-xl leading-relaxed text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 focus:bg-white resize-y transition"></textarea>
+
+          <!-- Printable Area Replacement for Print Mode -->
+          <div id="print-dictation-text" class="print-only hidden dictation-print-text font-serif text-slate-900 leading-widest mb-10"></div>
+
+          <!-- Real-time Verification & Stats Bar -->
+          <div class="no-print mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <!-- Stats -->
+            <div class="flex items-center space-x-6 text-sm">
+              <div><span class="text-slate-500">Думи:</span> <strong id="stat-words" class="text-slate-800">0</strong></div>
+              <div><span class="text-slate-500">Изречения:</span> <strong id="stat-sentences" class="text-slate-800">0</strong></div>
+              <div><span class="text-slate-500">Статус букви:</span> <strong id="stat-letters-status" class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> Наред</strong></div>
+            </div>
+
+            <!-- Letter & Dict Verification Status -->
+            <div id="verification-results-container" class="text-xs">
+              <!-- Dynamically populated verification errors -->
+            </div>
+          </div>
+
+          <!-- PRINTABLE WRITING LINES FOR STUDENTS (Visible only on Print) -->
+          <div class="print-only hidden mt-12 space-y-6">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 border-b pb-1">Записки / Редакция на ученика:</h4>
+            <div class="writing-line"></div>
+            <div class="writing-line"></div>
+            <div class="writing-line"></div>
+            <div class="writing-line"></div>
+            <div class="writing-line"></div>
+            <div class="writing-line"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 2: MY DICTIONARY -->
+    <div id="tab-dictionary" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-book-bookmark text-sky-600"></i>
+              Речник на учителя („Моите думи“)
+            </h2>
+            <p class="text-xs text-slate-500">Управлявайте списък от думи, с които ИИ или системата ще разполага за съставяне на диктовки.</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="exportDictionary()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+              <i class="fa-solid fa-download mr-1"></i>Износ (JSON)
+            </button>
+            <label class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer">
+              <i class="fa-solid fa-upload mr-1"></i>Заредeте файл
+              <input type="file" id="dict-file-input" accept=".json" class="hidden" onchange="importDictionary(event)">
+            </label>
+          </div>
+        </div>
+
+        <!-- Add Words Input -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div class="md:col-span-9">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Добавяне на думи (по отделно или разделени със запетая/интервал)</label>
+            <input type="text" id="dict-new-words" placeholder="напр. мама, татко, баба, есен, училище, слънце" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div class="md:col-span-3 flex items-end">
+            <button onclick="addWordsToDictionary()" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-plus"></i>Добави думите
+            </button>
+          </div>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
+          <div class="relative max-w-xs w-full">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="dict-search" oninput="renderDictionaryTable()" placeholder="Търсене на дума..." class="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div class="text-xs text-slate-500">
+            Общо думи в речника: <strong id="dict-total-count" class="text-slate-800">0</strong> |
+            Подходящи за изучените букви: <strong id="dict-eligible-count" class="text-emerald-600">0</strong>
+          </div>
+        </div>
+
+        <!-- Dictionary Table -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="max-h-[400px] overflow-y-auto">
+            <table class="w-full text-left text-sm border-collapse">
+              <thead class="bg-slate-50 text-slate-500 text-xs uppercase sticky top-0 border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4 font-semibold">Дума</th>
+                  <th class="py-3 px-4 font-semibold">Дължина</th>
+                  <th class="py-3 px-4 font-semibold">Статус за изучените букви</th>
+                  <th class="py-3 px-4 font-semibold text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody id="dict-table-body" class="divide-y divide-slate-100">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SENTENCE BANK (Offline Fallback Engine) -->
+    <div id="tab-bank" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-database text-sky-600"></i>
+              Вградена банка с проверени изречения
+            </h2>
+            <p class="text-xs text-slate-500">Текстове за офлайн режим или без използване на ИИ ключ.</p>
+          </div>
+          <button onclick="resetDefaultBank()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+            <i class="fa-solid fa-rotate-left mr-1"></i>Възстанови начални примери
+          </button>
+        </div>
+
+        <!-- Add Custom Sentence -->
+        <div class="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Добави ново изречение към банката</h3>
+          <div class="flex gap-2">
+            <input type="text" id="bank-new-sentence" placeholder="Въведете граматически правилно изречение за 1. или 2. клас..." class="flex-grow bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-sky-500">
+            <button onclick="addSentenceToBank()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition">
+              Добави
+            </button>
+          </div>
+        </div>
+
+        <!-- Bank List -->
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Налични изречения в банката (<span id="bank-count">0</span>)</h3>
+          <div id="bank-list-container" class="max-h-[450px] overflow-y-auto space-y-2 pr-1">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: SAVED DICTATIONS -->
+    <div id="tab-saved" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+        <div class="pb-4 border-b border-slate-100">
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-folder-open text-sky-600"></i>
+            Запазени диктовки
+          </h2>
+          <p class="text-xs text-slate-500">Вашите подготвени диктовки, съхранени на това устройство.</p>
+        </div>
+
+        <div id="saved-dictations-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: SETTINGS & API KEY -->
+    <div id="tab-settings" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+        <div class="pb-4 border-b border-slate-100">
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-gear text-sky-600"></i>
+            Настройки за ИИ услугата (Google Gemini API)
+          </h2>
+          <p class="text-xs text-slate-500">Конфигуриране на безплатен API ключ за пълни възможности за генериране.</p>
+        </div>
+
+        <!-- Explanation Card -->
+        <div class="p-4 bg-sky-50 rounded-xl border border-sky-100 text-xs text-sky-900 space-y-2">
+          <p class="font-bold flex items-center gap-1.5 text-sm">
+            <i class="fa-solid fa-circle-info text-sky-600"></i>
+            Относно безплатния ИИ генератор:
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sky-800 pl-1">
+            <li>Приложението използва **Google Gemini 2.5 Flash API**, което предоставя безплатен лимит (Free Tier).</li>
+            <li>Ключът се съхранява <strong>единствено във вашия браузър (LocalStorage)</strong> и не се изпраща към чужди сървъри.</li>
+            <li>Ако нямате ключ, можете да използвате <strong>Вградената банка с изречения</strong> за офлайн работа.</li>
+            <li>Можете да вземете безплатен API ключ от <a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline font-bold text-sky-700 hover:text-sky-900">Google AI Studio</a>.</li>
+          </ul>
+        </div>
+
+        <!-- API Key Input -->
+        <div class="space-y-3">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Вашият Gemini API Key</label>
+          <div class="flex gap-2">
+            <input type="password" id="setting-api-key" placeholder="AIzaSy..." class="flex-grow bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-sky-500 font-mono">
+            <button onclick="toggleApiKeyVisibility()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">
+              <i class="fa-solid fa-eye" id="key-eye-icon"></i>
+            </button>
+            <button onclick="saveApiKey()" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm transition">
+              Запази ключа
+            </button>
+          </div>
+          <div id="api-key-status" class="text-xs font-medium"></div>
+        </div>
+
+        <!-- Backup & Restore App Data -->
+        <div class="pt-6 border-t border-slate-100 space-y-3">
+          <h3 class="text-sm font-bold text-slate-800">Резервно копие на всички данни</h3>
+          <p class="text-xs text-slate-500">Запазете речника, настройките и банковата си информация във файл, за да ги пренесете на друг компютър.</p>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="exportAllAppData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition">
+              <i class="fa-solid fa-download mr-1.5"></i>Експорт на всички данни
+            </button>
+            <label class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer">
+              <i class="fa-solid fa-upload mr-1.5"></i>Възстановяване от файл
+              <input type="file" id="app-backup-input" accept=".json" class="hidden" onchange="importAllAppData(event)">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="no-print mt-auto bg-slate-100 border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>„Моята диктовка“ — Инструмент за начални учители | Съвместим с българската образователна програма (1. - 2. клас)</p>
+    </div>
+  </footer>
+
+  <!-- SAVE DICTATION MODAL -->
+  <div id="modal-save" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <h3 class="text-lg font-bold text-slate-800">Запазване на диктовката</h3>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Заглавие / Бележка</label>
+        <input type="text" id="save-title-input" placeholder="напр. Диктовка с букви А, М, И (2. седмица)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500">
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeModal('modal-save')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Отказ</button>
+        <button onclick="confirmSaveDictation()" class="px-4 py-2 text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white rounded-xl">Запази</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /* ===================================================================
+       1. GLOBAL STATE & INITIAL DATA
+       =================================================================== */
+    const CYRILLIC_ALPHABET = [
+      'А','Б','В','Г','Д','Е','Ж','З','И','Й','К','Л','М','Н','О',
+      'П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ь','Ю','Я'
+    ];
+
+    const DEFAULT_DICTIONARY = [
+      "мама", "татко", "баба", "дядо", "батко", "кака", "село", "град", "дом", "училище",
+      "клас", "ученик", "книга", "молив", "лист", "маса", "стол", "вода", "хляб", "мляко",
+      "ябълка", "круша", "гора", "река", "поле", "слънце", "небе", "облак", "дъжд", "сняг",
+      "зима", "пролет", "лято", "есен", "куче", "котка", "птица", "кон", "петел", "игра"
+    ];
+
+    const DEFAULT_SENTENCE_BANK = [
+      "Мама има мила Нина.",
+      "Нина има малка кукла.",
+      "Ана и Емил са в дома.",
+      "Емил има молив и лист.",
+      "На стола има нова книга.",
+      "Баба пече вкусна питка.",
+      "В гората има висока бор.",
+      "Слънцето грее ярко над полето.",
+      "Децата играят весело на двора.",
+      "Учениците четат нова приказка.",
+      "Есента донесе жълти листи.",
+      "Зайчето тича бързо в гората.",
+      "Котката мила спи на топличко.",
+      "Ние обичаме нашето училище.",
+      "В class става тихо и подредено."
+    ];
+
+    let state = {
+      selectedLetters: new Set(CYRILLIC_ALPHABET),
+      dictionary: [...DEFAULT_DICTIONARY],
+      sentenceBank: [...DEFAULT_SENTENCE_BANK],
+      savedDictations: [],
+      apiKey: '',
+      currentSource: 'ai',
+      currentText: ''
+    };
+
+    /* ===================================================================
+       2. INITIALIZATION & LOCALSTORAGE MANAGEMENT
+       =================================================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStateFromLocalStorage();
+      renderAlphabetGrid();
+      renderDictionaryTable();
+      renderSentenceBank();
+      renderSavedDictations();
+      updateSelectedCountDisplay();
+      initApiKeyDisplay();
+    });
+
+    function loadStateFromLocalStorage() {
+      const storedLetters = localStorage.getItem('md_letters');
+      if (storedLetters) {
+        state.selectedLetters = new Set(JSON.parse(storedLetters));
+      }
+
+      const storedDict = localStorage.getItem('md_dictionary');
+      if (storedDict) {
+        state.dictionary = JSON.parse(storedDict);
+      }
+
+      const storedBank = localStorage.getItem('md_bank');
+      if (storedBank) {
+        state.sentenceBank = JSON.parse(storedBank);
+      }
+
+      const storedSaved = localStorage.getItem('md_saved');
+      if (storedSaved) {
+        state.savedDictations = JSON.parse(storedSaved);
+      }
+
+      const storedKey = localStorage.getItem('md_api_key');
+      if (storedKey) {
+        state.apiKey = storedKey;
+      }
+    }
+
+    function saveStateToLocalStorage() {
+      localStorage.setItem('md_letters', JSON.stringify(Array.from(state.selectedLetters)));
+      localStorage.setItem('md_dictionary', JSON.stringify(state.dictionary));
+      localStorage.setItem('md_bank', JSON.stringify(state.sentenceBank));
+      localStorage.setItem('md_saved', JSON.stringify(state.savedDictations));
+      localStorage.setItem('md_api_key', state.apiKey);
+    }
+
+    /* ===================================================================
+       3. UI TABS & NAVIGATION
+       =================================================================== */
+    function switchTab(tabId) {
+      const tabs = ['generator', 'dictionary', 'bank', 'saved', 'settings'];
+      tabs.forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-${t}-btn`);
+        if (btn) {
+          btn.classList.remove('bg-white', 'text-sky-700', 'shadow');
+          btn.classList.add('hover:bg-white/10', 'text-white');
+        }
+      });
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-${tabId}-btn`);
+      if (activeBtn) {
+        activeBtn.classList.remove('hover:bg-white/10', 'text-white');
+        activeBtn.classList.add('bg-white', 'text-sky-700', 'shadow');
+      }
+
+      if (tabId === 'dictionary') renderDictionaryTable();
+      if (tabId === 'bank') renderSentenceBank();
+      if (tabId === 'saved') renderSavedDictations();
+    }
+
+    /* ===================================================================
+       4. ALPHABET SELECTOR COMPONENT
+       =================================================================== */
+    function renderAlphabetGrid() {
+      const container = document.getElementById('alphabet-grid');
+      container.innerHTML = '';
+
+      CYRILLIC_ALPHABET.forEach(letter => {
+        const isSelected = state.selectedLetters.has(letter);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => toggleLetter(letter);
+        btn.className = `py-2 rounded-xl text-base font-bold transition-all flex items-center justify-center border ${
+          isSelected 
+            ? 'bg-sky-600 text-white border-sky-600 shadow-sm scale-100' 
+            : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+        }`;
+        btn.innerText = letter;
+        container.appendChild(btn);
+      });
+    }
+
+    function toggleLetter(letter) {
+      if (state.selectedLetters.has(letter)) {
+        state.selectedLetters.delete(letter);
+      } else {
+        state.selectedLetters.add(letter);
+      }
+      saveStateToLocalStorage();
+      renderAlphabetGrid();
+      updateSelectedCountDisplay();
+      if (document.getElementById('dictation-textarea').value) {
+        checkCurrentText();
+      }
+    }
+
+    function selectAllLetters() {
+      state.selectedLetters = new Set(CYRILLIC_ALPHABET);
+      saveStateToLocalStorage();
+      renderAlphabetGrid();
+      updateSelectedCountDisplay();
+    }
+
+    function clearAllLetters() {
+      state.selectedLetters.clear();
+      saveStateToLocalStorage();
+      renderAlphabetGrid();
+      updateSelectedCountDisplay();
+    }
+
+    function applyPreset(preset) {
+      if (preset === 'vowels') {
+        state.selectedLetters = new Set(['А','Е','И','О','У','Ъ']);
+      } else if (preset === 'grade1_start') {
+        state.selectedLetters = new Set(['А','М','И','О','Е','Н']);
+      } else if (preset === 'no_complex') {
+        state.selectedLetters = new Set(CYRILLIC_ALPHABET.filter(l => !['Щ','Ю','Я','Ь'].includes(l)));
+      }
+      saveStateToLocalStorage();
+      renderAlphabetGrid();
+      updateSelectedCountDisplay();
+    }
+
+    function updateSelectedCountDisplay() {
+      document.getElementById('selected-letters-count').innerText = state.selectedLetters.size;
+    }
+
+    /* ===================================================================
+       5. TEXT VERIFICATION ENGINE (STRICT CHARACTER & DICT CHECK)
+       =================================================================== */
+    function cleanWord(word) {
+      return word.replace(/^[^\wа-яА-ЯѣѢѫѪ]+|[^\wа-яА-ЯѣѢѫѪ]+$/gu, '').trim();
+    }
+
+    function verifyText(text) {
+      if (!text || !text.trim()) {
+        return { isValid: true, invalidWords: [], unstudiedLetters: new Set(), outOfDictWords: [] };
+      }
+
+      const words = text.split(/\s+/).map(cleanWord).filter(w => w.length > 0);
+      const unstudiedLettersFound = new Set();
+      const invalidWordsMap = [];
+      const outOfDictWords = [];
+
+      const dictMode = document.querySelector('input[name="dict-mode"]:checked').value;
+      const lowerDict = new Set(state.dictionary.map(w => w.toLowerCase()));
+
+      words.forEach(word => {
+        const lettersInWord = word.toUpperCase().split('');
+        const forbiddenInThisWord = [];
+
+        lettersInWord.forEach(char => {
+          if (CYRILLIC_ALPHABET.includes(char) && !state.selectedLetters.has(char)) {
+            unstudiedLettersFound.add(char);
+            forbiddenInThisWord.push(char);
+          }
+        });
+
+        if (forbiddenInThisWord.length > 0) {
+          invalidWordsMap.push({ word, letters: forbiddenInThisWord });
+        }
+
+        // Dict check (Strict Mode)
+        if (dictMode === 'strict') {
+          if (!lowerDict.has(word.toLowerCase())) {
+            outOfDictWords.push(word);
+          }
+        }
+      });
+
+      return {
+        isValid: invalidWordsMap.length === 0 && outOfDictWords.length === 0,
+        invalidWords: invalidWordsMap,
+        unstudiedLetters: unstudiedLettersFound,
+        outOfDictWords
+      };
+    }
+
+    function checkCurrentText() {
+      const text = document.getElementById('dictation-textarea').value;
+      const result = verifyText(text);
+
+      // Update statistics UI
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const words = text.split(/\s+/).filter(w => cleanWord(w).length > 0);
+      
+      document.getElementById('stat-words').innerText = words.length;
+      document.getElementById('stat-sentences').innerText = sentences.length;
+      document.getElementById('editor-char-count').innerText = `${text.length} символа`;
+
+      const statusBadge = document.getElementById('stat-letters-status');
+      const resultsContainer = document.getElementById('verification-results-container');
+      resultsContainer.innerHTML = '';
+
+      if (result.invalidWords.length === 0 && result.outOfDictWords.length === 0) {
+        statusBadge.className = 'text-emerald-600 font-bold';
+        statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Наред';
+      } else {
+        statusBadge.className = 'text-red-600 font-bold';
+        statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Открити несъответствия';
+
+        if (result.invalidWords.length > 0) {
+          const div = document.createElement('div');
+          div.className = 'text-red-600 font-medium';
+          const errList = result.invalidWords.map(item => `"${item.word}" (буква: ${item.letters.join(', ')})`).join('; ');
+          div.innerText = `Неизучени букви в: ${errList}`;
+          resultsContainer.appendChild(div);
+        }
+
+        if (result.outOfDictWords.length > 0) {
+          const div = document.createElement('div');
+          div.className = 'text-amber-600 font-medium';
+          div.innerText = `Думи извън речника: ${result.outOfDictWords.join(', ')}`;
+          resultsContainer.appendChild(div);
+        }
+      }
+    }
+
+    function onTextareaEdit() {
+      checkCurrentText();
+    }
+
+    function validateRequiredWords() {
+      const reqInput = document.getElementById('setting-required-words').value;
+      const errContainer = document.getElementById('required-words-error');
+      if (!reqInput.trim()) {
+        errContainer.classList.add('hidden');
+        return true;
+      }
+
+      const words = reqInput.split(/[,;]/).map(w => cleanWord(w)).filter(w => w.length > 0);
+      const forbiddenFound = [];
+
+      words.forEach(w => {
+        w.toUpperCase().split('').forEach(char => {
+          if (CYRILLIC_ALPHABET.includes(char) && !state.selectedLetters.has(char)) {
+            forbiddenFound.push(`"${w}" (${char})`);
+          }
+        });
+      });
+
+      if (forbiddenFound.length > 0) {
+        errContainer.innerText = `Задължителните думи съдържат неизучени букви: ${forbiddenFound.join(', ')}`;
+        errContainer.classList.remove('hidden');
+        return false;
+      } else {
+        errContainer.classList.add('hidden');
+        return true;
+      }
+    }
+
+    /* ===================================================================
+       6. GENERATION CONTROLLER (AI ENGINE & OFFLINE BANK ENGINE)
+       =================================================================== */
+    async function generateDictation() {
+      // 1. Minimum letters check
+      if (state.selectedLetters.size < 3) {
+        showAlert('warning', 'Твърде ограничен избор на букви! За съставяне на смислени изречения изберете поне 4-5 букви (напр. А, М, И, О, Е, Н).');
+        return;
+      }
+
+      // 2. Validate mandatory words
+      if (!validateRequiredWords()) {
+        showAlert('danger', 'Моля, коригирайте задължителните думи преди генериране.');
+        return;
+      }
+
+      const engineMode = document.querySelector('input[name="engine-mode"]:checked').value;
+      const btnGen = document.getElementById('btn-generate');
+      btnGen.disabled = true;
+      btnGen.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Генериране...</span>';
+      hideAlert();
+
+      try {
+        if (engineMode === 'ai') {
+          await generateWithAI();
+        } else {
+          generateFromOfflineBank();
+        }
+      } catch (err) {
+        showAlert('danger', err.message || 'Възникна грешка при генерирането.');
+      } finally {
+        btnGen.disabled = false;
+        btnGen.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i> <span>Генерирай диктовка</span>';
+      }
+    }
+
+    /* 6A. OFFLINE BANK ENGINE */
+    function generateFromOfflineBank() {
+      const targetCount = parseInt(document.getElementById('setting-sentences-range').value, 10);
+      const reqWordsRaw = document.getElementById('setting-required-words').value;
+      const reqWords = reqWordsRaw.split(/[,;]/).map(w => cleanWord(w).toLowerCase()).filter(w => w.length > 0);
+
+      // Filter bank sentences valid for current letter set
+      const eligible = state.sentenceBank.filter(sentence => {
+        const check = verifyText(sentence);
+        return check.invalidWords.length === 0;
+      });
+
+      if (eligible.length === 0) {
+        showAlert('warning', 'Във вградената банка няма изречения, съставени ЕДИНСТВЕНО от избраните в момента букви. Добавете свои изречения в раздела "Банка изречения" или превключете на ИИ режим.');
+        return;
+      }
+
+      // Shuffle and pick sentences
+      const shuffled = [...eligible].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, Math.min(targetCount, shuffled.length));
+
+      const generatedText = selected.join(' ');
+      document.getElementById('dictation-textarea').value = generatedText;
+      
+      state.currentSource = 'bank';
+      updateSourceBadge('Подбран от банката', 'bg-blue-100 text-blue-800');
+      checkCurrentText();
+    }
+
+    /* 6B. GOOGLE GEMINI AI ENGINE */
+    async function generateWithAI() {
+      if (!state.apiKey) {
+        throw new Error('Липсва API ключ за Google Gemini! Въведете ключ в раздел "Настройки / ИИ" или използвайте режим "Вградена банка".');
+      }
+
+      const lettersArray = Array.from(state.selectedLetters);
+      const dictMode = document.querySelector('input[name="dict-mode"]:checked').value;
+      const format = document.getElementById('setting-format').value;
+      const sentenceCount = document.getElementById('setting-sentences-range').value;
+      const sentenceTypes = document.getElementById('setting-types').value;
+      const difficulty = document.getElementById('setting-difficulty').value;
+      const topic = document.getElementById('setting-topic').value;
+      const requiredWords = document.getElementById('setting-required-words').value;
+
+      // Eligible words from teacher's dict
+      const eligibleTeacherDict = state.dictionary.filter(word => {
+        const check = verifyText(word);
+        return check.invalidWords.length === 0;
+      });
+
+      let prompt = `Вие сте опитен начален учител в България. Създайте текстов материал за диктовка.\n\n`;
+      prompt += `СТРИКТНО ПРАВИЛО ЗА БУКВИТЕ:\n`;
+      prompt += `ИЗПОЛЗВАЙТЕ САМО И ЕДИНСТВЕНО СЛЕДНИТЕ РАЗРЕШЕНИ БУКВИ: [ ${lettersArray.join(', ')} ]\n`;
+      prompt += `ВСЯКА дума в текста (включително имена, предлози, съюзи и кратки думи) трябва да съдържа САМО горните букви. Главните и малките букви са еднакви. НЕ ИЗПОЛЗВАЙТЕ никоя друга буква от азбуката!\n\n`;
+
+      if (dictMode === 'strict') {
+        prompt += `РЕЖИМ НА РЕЧНИКА: Използвайте САМО думи от този списък: [ ${eligibleTeacherDict.join(', ')} ]. Не измисляйте други думи!\n\n`;
+      } else if (eligibleTeacherDict.length > 0) {
+        prompt += `ПРЕПОРЪЧИТЕЛЕН РЕЧНИК: Желателно е да използвате и думи от: [ ${eligibleTeacherDict.join(', ')} ], но може и други подходящи български думи с изучените букви.\n\n`;
+      }
+
+      if (requiredWords.trim()) {
+        prompt += `ЗАДЪЛЖИТЕЛНИ ДУМИ: Задължително включете следните думи: ${requiredWords}.\n\n`;
+      }
+
+      prompt += `ПАРАМЕТРИ НА ТЕКСТА:\n`;
+      prompt += `- Формат: ${format === 'connected' ? 'Свързан сюжетен текст с логическа последователност между изреченията' : 'Отделни самостоятелни изречения'}\n`;
+      prompt += `- Брой изречения: точно ${sentenceCount}\n`;
+      prompt += `- Сложност: ${difficulty} (за 1. - 2. клас)\n`;
+      prompt += `- Вид изречения: ${sentenceTypes}\n`;
+      if (topic.trim()) prompt += `- Тема: ${topic} (ако буквите позволяват)\n`;
+
+      prompt += `\nВЪРНЕТЕ ЕДИНСТВЕНО ГОТОВИЯ ТЕКСТ НА ДИКТОВКАТА БЕЗ ДОПЪЛНИТЕЛНИ ОБЯСНЕНИЯ, ВОВЕДИ ИЛИ СИМВОЛИ ЗА ФОРМАТИРАНЕ.`;
+
+      // Call API
+      let responseText = await callGeminiApi(prompt);
+
+      // Automated programmatic validation
+      let verification = verifyText(responseText);
+
+      // If invalid, perform 1 automatic Retry attempt
+      if (!verification.isValid && verification.invalidWords.length > 0) {
+        const errWordsList = verification.invalidWords.map(i => i.word).join(', ');
+        const retryPrompt = `${prompt}\n\nВНИМАНИЕ: Предишното генериране съдържаше грешни думи с неизучени букви (${errWordsList}). Моля, поправете ги и използвайте САМО буквите: [ ${lettersArray.join(', ')} ].`;
+        responseText = await callGeminiApi(retryPrompt);
+        verification = verifyText(responseText);
+      }
+
+      document.getElementById('dictation-textarea').value = responseText.trim();
+      state.currentSource = 'ai';
+      updateSourceBadge('Генерирано с ИИ (Gemini)', 'bg-emerald-100 text-emerald-800');
+      checkCurrentText();
+
+      if (!verification.isValid) {
+        showAlert('warning', 'ИИ генерира текст, но някои думи съдържат неизучени букви. Можете лесно да ги редактирате директно в полето по-долу.');
+      }
+    }
+
+    async function callGeminiApi(promptText) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(state.apiKey)}`;
+      
+      const payload = {
+        contents: [{
+          parts: [{ text: promptText }]
+        }]
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errorJson = await res.json().catch(() => ({}));
+        if (res.status === 400 || res.status === 403) {
+          throw new Error('Невалиден API ключ или липса на достъп. Проверете ключа в "Настройки / ИИ".');
+        } else if (res.status === 429) {
+          throw new Error('Изчерпан безплатен лимит (Quota Exceeded) на Gemini API. Опитайте пак след малко или превключете на "Вградена банка".');
+        } else {
+          throw new Error(errorJson.error?.message || `Грешка от ИИ услугата (Status ${res.status}).`);
+        }
+      }
+
+      const data = await res.json();
+      const generated = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!generated) {
+        throw new Error('ИИ услугата върна празен отговор.');
+      }
+      return generated;
+    }
+
+    /* ===================================================================
+       7. DICTIONARY MANAGEMENT ("МОИТЕ ДУМИ")
+       =================================================================== */
+    function renderDictionaryTable() {
+      const tbody = document.getElementById('dict-table-body');
+      const filterQuery = document.getElementById('dict-search').value.toLowerCase().trim();
+      tbody.innerHTML = '';
+
+      let eligibleCount = 0;
+
+      state.dictionary.forEach((word, index) => {
+        const check = verifyText(word);
+        const isEligible = check.invalidWords.length === 0;
+        if (isEligible) eligibleCount++;
+
+        if (filterQuery && !word.toLowerCase().includes(filterQuery)) return;
+
+        const tr = document.createElement('tr');
+        tr.className = isEligible ? 'hover:bg-slate-50' : 'bg-amber-50/40 hover:bg-amber-50';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-800">${word}</td>
+          <td class="py-3 px-4 text-xs text-slate-500">${word.length} б.</td>
+          <td class="py-3 px-4 text-xs font-semibold">
+            ${isEligible 
+              ? '<span class="inline-flex items-center text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200"><i class="fa-solid fa-circle-check mr-1.5 text-[10px]"></i> Подходяща</span>' 
+              : `<span class="inline-flex items-center text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200"><i class="fa-solid fa-circle-xmark mr-1.5 text-[10px]"></i> Неизучени букви (${Array.from(check.unstudiedLetters).join(', ')})</span>`
+            }
+          </td>
+          <td class="py-3 px-4 text-right space-x-1">
+            <button onclick="deleteDictionaryWord(${index})" class="text-slate-400 hover:text-red-600 p-1.5 transition">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('dict-total-count').innerText = state.dictionary.length;
+      document.getElementById('dict-eligible-count').innerText = eligibleCount;
+    }
+
+    function addWordsToDictionary() {
+      const input = document.getElementById('dict-new-words');
+      const rawText = input.value;
+      if (!rawText.trim()) return;
+
+      const words = rawText.split(/[,;\s]+/).map(w => cleanWord(w)).filter(w => w.length > 0);
+      let added = 0;
+
+      words.forEach(w => {
+        if (!state.dictionary.some(existing => existing.toLowerCase() === w.toLowerCase())) {
+          state.dictionary.push(w);
+          added++;
+        }
+      });
+
+      saveStateToLocalStorage();
+      renderDictionaryTable();
+      input.value = '';
+    }
+
+    function deleteDictionaryWord(index) {
+      state.dictionary.splice(index, 1);
+      saveStateToLocalStorage();
+      renderDictionaryTable();
+    }
+
+    function exportDictionary() {
+      const jsonStr = JSON.stringify(state.dictionary, null, 2);
+      downloadFile(jsonStr, 'moite_dumi_rechnik.json', 'application/json');
+    }
+
+    function importDictionary(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            state.dictionary = Array.from(new Set([...state.dictionary, ...imported]));
+            saveStateToLocalStorage();
+            renderDictionaryTable();
+            alert('Речникът беше успешно обновен!');
+          }
+        } catch (err) {
+          alert('Грешка при зареждане на JSON файла.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* ===================================================================
+       8. SENTENCE BANK MANAGEMENT (OFFLINE REPOSITORY)
+       =================================================================== */
+    function renderSentenceBank() {
+      const container = document.getElementById('bank-list-container');
+      container.innerHTML = '';
+
+      state.sentenceBank.forEach((sentence, index) => {
+        const check = verifyText(sentence);
+        const isEligible = check.invalidWords.length === 0;
+
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-xl border flex items-center justify-between text-sm ${
+          isEligible ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-200 opacity-75'
+        }`;
+
+        div.innerHTML = `
+          <div class="space-y-0.5 max-w-[85%]">
+            <p class="font-medium text-slate-800">${sentence}</p>
+            <span class="text-[11px] ${isEligible ? 'text-emerald-600' : 'text-slate-400'} font-semibold">
+              ${isEligible ? '✓ Готово за текущите букви' : `Поддържа съгласни/гласни извън избор: ${Array.from(check.unstudiedLetters).join(', ')}`}
+            </span>
+          </div>
+          <button onclick="deleteSentenceFromBank(${index})" class="text-slate-400 hover:text-red-600 p-2">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('bank-count').innerText = state.sentenceBank.length;
+    }
+
+    function addSentenceToBank() {
+      const input = document.getElementById('bank-new-sentence');
+      const val = input.value.trim();
+      if (!val) return;
+
+      state.sentenceBank.push(val);
+      saveStateToLocalStorage();
+      renderSentenceBank();
+      input.value = '';
+    }
+
+    function deleteSentenceFromBank(index) {
+      state.sentenceBank.splice(index, 1);
+      saveStateToLocalStorage();
+      renderSentenceBank();
+    }
+
+    function resetDefaultBank() {
+      if (confirm('Желаете ли да възстановите стандартните изречения в банката?')) {
+        state.sentenceBank = [...DEFAULT_SENTENCE_BANK];
+        saveStateToLocalStorage();
+        renderSentenceBank();
+      }
+    }
+
+    /* ===================================================================
+       9. SAVED DICTATIONS & EXPORT/PRINT
+       =================================================================== */
+    function saveDictationModal() {
+      const text = document.getElementById('dictation-textarea').value;
+      if (!text.trim()) {
+        alert('Първо генерирайте или въведете текст за диктовка.');
+        return;
+      }
+      document.getElementById('save-title-input').value = `Диктовка - ${new Date().toLocaleDateString('bg-BG')}`;
+      document.getElementById('modal-save').classList.remove('hidden');
+    }
+
+    function confirmSaveDictation() {
+      const title = document.getElementById('save-title-input').value.trim() || 'Без заглавие';
+      const text = document.getElementById('dictation-textarea').value;
+
+      state.savedDictations.unshift({
+        id: Date.now(),
+        title,
+        text,
+        date: new Date().toLocaleDateString('bg-BG'),
+        lettersCount: state.selectedLetters.size
+      });
+
+      saveStateToLocalStorage();
+      closeModal('modal-save');
+      alert('Диктовката беше запазена успешно!');
+    }
+
+    function renderSavedDictations() {
+      const container = document.getElementById('saved-dictations-list');
+      container.innerHTML = '';
+
+      if (state.savedDictations.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 col-span-2">Няма запазени диктовки на това устройство.</p>';
+        return;
+      }
+
+      state.savedDictations.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'p-4 bg-white border border-slate-200 rounded-xl space-y-3 shadow-sm flex flex-col justify-between';
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-1">
+              <h4 class="font-bold text-slate-800 text-sm">${item.title}</h4>
+              <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">${item.date}</span>
+            </div>
+            <p class="text-xs text-slate-600 line-clamp-3 bg-slate-50 p-2 rounded-lg border font-serif">${item.text}</p>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <button onclick="loadSavedDictation(${index})" class="text-xs font-bold text-sky-600 hover:text-sky-700">
+              <i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> Зареди в редактора
+            </button>
+            <button onclick="deleteSavedDictation(${index})" class="text-xs text-slate-400 hover:text-red-600">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function loadSavedDictation(index) {
+      const item = state.savedDictations[index];
+      document.getElementById('dictation-textarea').value = item.text;
+      switchTab('generator');
+      checkCurrentText();
+    }
+
+    function deleteSavedDictation(index) {
+      state.savedDictations.splice(index, 1);
+      saveStateToLocalStorage();
+      renderSavedDictations();
+    }
+
+    function copyToClipboard() {
+      const text = document.getElementById('dictation-textarea').value;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Текстът е копиран в клипборда!');
+      });
+    }
+
+    function exportAsTxt() {
+      const text = document.getElementById('dictation-textarea').value;
+      if (!text) return;
+      downloadFile(text, 'diktovka.txt', 'text/plain;charset=utf-8');
+    }
+
+    function prepareAndPrint() {
+      const text = document.getElementById('dictation-textarea').value;
+      if (!text.trim()) {
+        alert('Първо въведете или генерирайте текст за печат.');
+        return;
+      }
+      document.getElementById('print-dictation-text').innerText = text;
+      window.print();
+    }
+
+    /* ===================================================================
+       10. SETTINGS & APP BACKUP
+       =================================================================== */
+    function initApiKeyDisplay() {
+      if (state.apiKey) {
+        document.getElementById('setting-api-key').value = state.apiKey;
+        document.getElementById('api-key-status').className = 'text-xs text-emerald-600 font-semibold';
+        document.getElementById('api-key-status').innerText = '✓ Има съхранен API ключ';
+      }
+    }
+
+    function saveApiKey() {
+      const val = document.getElementById('setting-api-key').value.trim();
+      state.apiKey = val;
+      saveStateToLocalStorage();
+      initApiKeyDisplay();
+      alert('API ключът беше запазен!');
+    }
+
+    function toggleApiKeyVisibility() {
+      const input = document.getElementById('setting-api-key');
+      const icon = document.getElementById('key-eye-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+      }
+    }
+
+    function exportAllAppData() {
+      const fullData = {
+        letters: Array.from(state.selectedLetters),
+        dictionary: state.dictionary,
+        sentenceBank: state.sentenceBank,
+        savedDictations: state.savedDictations
+      };
+      downloadFile(JSON.stringify(fullData, null, 2), 'moyata_diktovka_backup.json', 'application/json');
+    }
+
+    function importAllAppData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.letters) state.selectedLetters = new Set(data.letters);
+          if (data.dictionary) state.dictionary = data.dictionary;
+          if (data.sentenceBank) state.sentenceBank = data.sentenceBank;
+          if (data.savedDictations) state.savedDictations = data.savedDictations;
+
+          saveStateToLocalStorage();
+          renderAlphabetGrid();
+          renderDictionaryTable();
+          renderSentenceBank();
+          renderSavedDictations();
+          alert('Всички данни от файла бяха възстановени успешно!');
+        } catch (err) {
+          alert('Невалиден резервен файл.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* ===================================================================
+       11. UTILITY FUNCTIONS
+       =================================================================== */
+    function downloadFile(content, fileName, contentType) {
+      const a = document.createElement('a');
+      const file = new Blob([content], { type: contentType });
+      a.href = URL.createObjectURL(file);
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function showAlert(type, message) {
+      const alertDiv = document.getElementById('status-alert');
+      alertDiv.classList.remove('hidden');
+
+      if (type === 'warning') {
+        alertDiv.className = 'p-4 border-b border-amber-200 bg-amber-50 text-amber-900 text-xs font-medium flex items-center gap-2';
+        alertDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm"></i> <span>${message}</span>`;
+      } else if (type === 'danger') {
+        alertDiv.className = 'p-4 border-b border-red-200 bg-red-50 text-red-900 text-xs font-medium flex items-center gap-2';
+        alertDiv.innerHTML = `<i class="fa-solid fa-circle-exclamation text-red-600 text-sm"></i> <span>${message}</span>`;
+      }
+    }
+
+    function hideAlert() {
+      document.getElementById('status-alert').classList.add('hidden');
+    }
+
+    function updateSourceBadge(label, colorClasses) {
+      const badge = document.getElementById('badge-source');
+      badge.className = `px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClasses}`;
+      badge.innerText = label;
+      badge.classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
